@@ -1,0 +1,33 @@
+--- # Playbook for provisioning the Docker with Ansible
+- hosts: all
+  become: yes
+  tasks:
+  - name: Copy the docker repo to yum.repos.d
+    copy: src=docker.repo dest=/etc/yum.repos.d/docker.repo mode=0755 
+    
+  - name: Install the Docker-Engine package
+    package: name=docker-engine state=latest
+    notify: 
+      - start docker 
+      - check docker
+      - Display docker status
+  - name: Install git
+    package: name=git state=latest
+  - name: Create the docker user for managing the docker containers
+    user:
+      name: docker
+      password: '$6$kXw.kYUcfqDAXaa8$QjIo3g5VDf0pf7GFEkxl./DBPHSZAXNlw/fiS6K9V0QIyUZxLFR3iZGxxwyjhbixoj.DjHOMf5En7x7erWmeE0'
+      groups: docker,wheel
+      append: yes
+      shell: /bin/bash
+      home: /home/docker
+      generate_ssh_key: yes    
+  handlers:
+  - name: start docker
+    service: name=docker state=started enabled=yes
+  - name: check docker
+    shell: systemctl status docker
+    register: result 
+  - name: Display docker status
+    debug: var=result
+ 
